@@ -1,7 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {  
   chrome.contextMenus.create({
     id: "ociInfoForNetwork",
-    title: "Add OCI Details to Network Navigator",
+    title: "Add OCI Details to OCI Projects extension",
     contexts: ["page"],
     documentUrlPatterns: ["*://cloud.oracle.com/*"]
   });
