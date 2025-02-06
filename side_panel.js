@@ -30,19 +30,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 let data = [
   {
-    id: "proj1",
-    name: "Project Alpha",
-    type: "project",
-    children: [
-      { id: "obj1", name: "Object A" },
-      {
-        id: "obj2",
-        name: "Object B",
-        children: [{ id: "subobj1", name: "Sub Object X" }]
-      }
-    ]
-  },
-  { id: "proj2", name: "Project Beta", type: "project" }
+    id: "0",
+    name: "OCI Projects",
+    type: "root" }
 ];
 
 let selectedNodeElement = null; // Store selected node element
@@ -52,9 +42,10 @@ let expandedNodes = new Set(); // Store expanded node IDs
 
 function createTree(parent, nodes) {
   nodes.forEach(node => {
+    const isRoot =  (node.type=="root")
     let div = document.createElement("div");
-    div.className = "tree-node";
-    div.draggable = true; // Enable drag & drop
+    div.className = isRoot?"tree-root":"tree-node";
+    div.draggable = !isRoot; // Enable drag & drop
 
     let toggle = document.createElement("span");
     toggle.className = "toggle";
@@ -65,7 +56,6 @@ function createTree(parent, nodes) {
     name.textContent = node.name;
     name.classList.add("node-label");
     name.dataset.id = node.id; // Store node ID in a data attribute
-    name.dataset.isProject = node.children ? "true" : "false";
 
     div.appendChild(toggle);
     div.appendChild(name);
@@ -83,8 +73,7 @@ function createTree(parent, nodes) {
       selectedNodeId = node.id;
       selectedNode = node
       selectedNodeElement = div;
-      console.log("Selected Node ID:", selectedNodeId);
-      showPropertyPanel(node);
+      if (!isRoot) showPropertyPanel(node);
     });
 
     name.addEventListener("dblclick", () => {
@@ -99,8 +88,10 @@ function createTree(parent, nodes) {
     });
 
     // Drag & Drop events
+    if (!isRoot) {
     div.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("nodeId", node.id);
+      console.log(`drag ${node.id}`)
       e.stopPropagation();
     });
 
@@ -117,7 +108,7 @@ function createTree(parent, nodes) {
         moveNode(draggedNodeId, node.id);
       }
     });
-
+  }
     let childContainer = document.createElement("div");
     childContainer.style.display = expandedNodes.has(node.id) ? "block" : "none";
     div.appendChild(childContainer);
@@ -193,12 +184,17 @@ function showContextMenu(x, y, node) {
   contextMenu.style.left = `${x}px`;
   contextMenu.style.display = "block";
 
+  const deleteNodeOption = document.getElementById("delete-node")
   // Set actions
-  document.getElementById("delete-node").onclick = () => deleteNode(node);
+  if (node?.type != "root") {
+    deleteNodeOption.style.display = "block";
+    deleteNodeOption.onclick = () => deleteNode(node);
+  } else {
+    deleteNodeOption.style.display = "none";
+    
+  }
   const createChildOption = document.getElementById("create-child");
-
-
-  if (node?.type === "project") {
+  if (node?.type === "project" ||node?.type === "root") {
     createChildOption.style.display = "block";
     createChildOption.onclick = () => createChildProject(node);
   } else {
@@ -224,16 +220,6 @@ function deleteNode(node) {
   refreshTree();
 }
 
-function findNode(arr, nodeId) {
-  arr.forEach(item => {
-    if (item.id === nodeId) {
-      if (!item.children) item.children = [];
-      return item
-    } else if (item.children) {
-      return findNode(item.children, nodeId);
-    }
-  });
-}
 
 
 function createChildProject(node) {

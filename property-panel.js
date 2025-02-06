@@ -11,8 +11,8 @@ document.addEventListener("click", (event) => {
 export function showPropertyPanel(node) {
     const panelContent = document.getElementById("property-content");
     if (node.type == 'project') {
+        panelHeader.innerText = node.name
         panelContent.innerHTML = `
-  <h3>${node.name}</h3>
   <p><strong>ID:</strong> ${node.id}</p>
   <p><strong>Type:</strong> ${node.type || "Unknown"}</p>
 `
