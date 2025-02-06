@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OCI Projects</title>
+    <link rel="stylesheet" href="oci-projects.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+        }
+
+        #content {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>OCI Projects</h1>
+    <div id="node-tooltip"
+        style="display: none; position: absolute; background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #ddd; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); font-size: 12px; z-index: 10;">
+    </div>
+    <div id="tree-container"></div>
+    <div id="content"></div>
+    <div id="context-menu" class="context-menu">
+        <ul>
+            <li id="delete-node">Delete</li>
+            <li id="create-child">Create Child Project</li>
+        </ul>
+    </div>
+    <div id="property-panel" class="property-panel">
+        <div class="panel-header">
+            <span>Properties</span>
+            <button id="closePropertyPanelButton" >[X]</button>
+        </div>
+        <div id="property-content"></div>
+    </div>
+
+    <script src="side_panel.js" type="module"></script>
+</body>
+
+</html>

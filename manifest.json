@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "OCI Projects",
+  "description": "A Chrome Extension to bundle references to OCI resources in Projects. References are stored in a side panel, retained in local browser storage across user sessions. References can be clicked to bring up the resource in the corresponding OCI Console page for inspection and manipulation ",
+  "version": "0.6",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "scripting", "sidePanel"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://cloud.oracle.com/*"],
+      "js": ["oci-content.js"],
+      "run_at": "document_end" 
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/oracle-cloud-icon-16.png",
+      "48": "icons/oracle-cloud-icon-48.png",
+      "128": "icons/oracle-cloud-icon-128.png"
+    }
+  },"side_panel": {
+    "default_path": "oci_projects_side_panel.html"
+  },
+  "icons": {
+    "16": "icons/oracle-cloud-icon-16.png",
+    "48": "icons/oracle-cloud-icon-48.png",
+    "128": "icons/oracle-cloud-icon-128.png"
+}
+}
