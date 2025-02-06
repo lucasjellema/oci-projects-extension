@@ -11,6 +11,7 @@ export const processOciProfile = (message) => {
     ociNode.type = 'ociResource';
     ociNode.ocid = profile.ocid;
     ociNode.subtype = profile.subtype;
+    ociNode.notes= ""
     ociNode.ociService = `${profile.ociService}`;
     const icon = resourceTypeImageMap[ociNode.subtype];
     if (icon) ociNode.image = 'images/oci-images/' + icon ;

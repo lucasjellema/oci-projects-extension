@@ -220,7 +220,10 @@ function deleteNode(node) {
   refreshTree();
 }
 
-
+document.addEventListener("treeChanged", (event) => {
+  changed = true
+  refreshTree();
+});
 
 function createChildProject(node) {
   const newProjectName = prompt("Enter new project name:");
@@ -230,11 +233,13 @@ function createChildProject(node) {
     id: `proj-${Date.now()}`, // Unique ID
     name: newProjectName,
     type: "project",
+    notes:"",
     children: []
   };
   if (!node.children) node.children = [];
   node.children.push(newProject)
   changed = true
+  expandedNodes.add(node.id);
   refreshTree();
 }
 // Refresh tree UI
