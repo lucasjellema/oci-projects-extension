@@ -49,7 +49,8 @@ function createTree(parent, nodes) {
 
     let toggle = document.createElement("span");
     toggle.className = "toggle";
-    toggle.textContent = node.children ? (expandedNodes.has(node.id) ? "▼ " : "▶ ") : "• ";
+    const hasChildren = node.children && node.children.length > 0; // Check if the node has any children
+    toggle.textContent = hasChildren ? (expandedNodes.has(node.id) ? "▼ " : "▶ ") : "• ";
 
 
     let name = document.createElement("span");
