@@ -1,0 +1,160 @@
+# OCI Projects Extension - Architecture Document
+
+## Technical Overview
+
+The OCI Projects Extension is a Chrome browser extension built using the Chrome Extension Manifest V3 framework. It consists of several components that work together to capture, organize, and display OCI resources in a project-based structure.
+
+## Components
+
+### 1. Background Service Worker (`background.js`)
+- **Purpose**: Manages the extension's lifecycle and handles communication between the content script and side panel
+- **Key Functions**:
+  - Creates the context menu item in the OCI Console
+  - Handles context menu click events
+  - Facilitates message passing between the content script and side panel
+
+### 2. Content Script (`oci-content.js`)
+- **Purpose**: Extracts OCI resource information from the active OCI Console page
+- **Key Functions**:
+  - Listens for messages from the background service worker
+  - Parses the DOM to extract resource details (OCID, name, type, compartment, etc.)
+  - Identifies references to other OCI resources on the page
+  - Sends the extracted information back to the background service worker
+
+### 3. Side Panel (`oci_projects_side_panel.html`, `side_panel.js`)
+- **Purpose**: Displays and manages the project tree and resource properties
+- **Key Functions**:
+  - Renders the tree view of projects and resources
+  - Handles user interactions (click, double-click, drag-and-drop)
+  - Shows resource properties when a resource is selected
+  - Manages context menu actions (delete, create child project)
+  - Periodically saves changes to browser local storage
+
+### 4. OCI Profile Processor (`processOciProfile.js`)
+- **Purpose**: Transforms raw OCI resource data into a structured node for the project tree
+- **Key Functions**:
+  - Creates a new node with a unique ID
+  - Formats the node name and properties
+  - Assigns appropriate icons based on resource type
+
+### 5. Utility Functions (`utils.js`)
+- **Purpose**: Provides common utility functions used across the extension
+- **Key Functions**:
+  - Generates unique IDs for nodes
+  - Saves and retrieves project data from browser local storage
+
+### 6. Property Panel (`property-panel.js`)
+- **Purpose**: Displays detailed properties of selected resources
+- **Key Functions**:
+  - Renders property information in a user-friendly format
+  - Provides controls to close the panel
+
+## Data Flow
+
+1. **Resource Capture**:
+   - User right-clicks on an OCI resource page and selects the extension's context menu item
+   - Background service worker sends a message to the content script
+   - Content script extracts resource information from the page
+   - Content script sends the information back to the background service worker
+   - Background service worker forwards the information to the side panel
+   - Side panel processes the information and adds it to the project tree
+
+2. **Resource Management**:
+   - User interacts with the project tree in the side panel
+   - Side panel updates the tree structure based on user actions
+   - Changes are periodically saved to browser local storage
+
+3. **Resource Navigation**:
+   - User double-clicks on a resource in the project tree
+   - Side panel opens the resource in the OCI Console
+
+## Data Structure
+
+```javascript
+// Example of the project tree data structure
+[
+  {
+    id: "0",
+    name: "OCI Projects",
+    type: "root",
+    children: [
+      {
+        id: "project-123",
+        name: "My Project",
+        type: "project",
+        children: [
+          {
+            id: "resource-456",
+            name: "compartment my-compartment",
+            type: "ociResource",
+            subtype: "compartment",
+            ocid: "ocid1.compartment.oc1..aaaaaaaa...",
+            url: "https://cloud.oracle.com/...",
+            ociService: "Identity",
+            compartment: "Root Compartment",
+            notes: ""
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+## Storage
+
+The extension uses Chrome's `localStorage` API to persist the project tree data across browser sessions. The data is saved automatically every 5 seconds when changes are detected.
+
+## Security Considerations
+
+- The extension only operates within the context of the OCI Console (https://cloud.oracle.com/*)
+- No data is sent to external servers; all data is stored locally in the browser
+- The extension requires minimal permissions: contextMenus, activeTab, scripting, and sidePanel
+
+## Component Interaction Diagram
+
+```
+┌───────────────────┐      ┌───────────────────┐      ┌───────────────────┐
+│                   │      │                   │      │                   │
+│  OCI Console Page │◄────►│  Content Script   │◄────►│ Background Script │
+│                   │      │  (oci-content.js) │      │ (background.js)   │
+│                   │      │                   │      │                   │
+└───────────────────┘      └───────────────────┘      └─────────┬─────────┘
+                                                                │
+                                                                │
+                                                                ▼
+┌───────────────────┐      ┌───────────────────┐      ┌───────────────────┐
+│                   │      │                   │      │                   │
+│   Property Panel  │◄────►│    Side Panel     │◄────►│  OCI Profile      │
+│ (property-panel.js)│     │  (side_panel.js)  │      │  Processor        │
+│                   │      │                   │      │(processOciProfile.js)
+└───────────────────┘      └───────────────────┘      └───────────────────┘
+                                     │
+                                     │
+                                     ▼
+                           ┌───────────────────┐
+                           │                   │
+                           │  Browser Storage  │
+                           │  (localStorage)   │
+                           │                   │
+                           └───────────────────┘
+```
+
+## Extension Lifecycle
+
+1. **Installation**: Extension is installed and registered with the browser
+2. **Initialization**: Background service worker is loaded and context menu is created
+3. **Activation**: User navigates to the OCI Console and the content script is injected
+4. **Usage**: User interacts with the extension through the context menu and side panel
+5. **Storage**: Project data is saved to browser local storage
+6. **Persistence**: Data is loaded from storage when the extension is reopened
+
+## Future Enhancements
+
+1. **Export/Import**: Add functionality to export and import project data
+2. **Search**: Implement search functionality to quickly find resources
+3. **Tagging**: Allow users to add custom tags to resources
+4. **Filtering**: Add ability to filter resources by type, compartment, etc.
+5. **Resource Groups**: Support for grouping related resources together
+6. **Notifications**: Alert users when resources are modified or deleted
+7. **Cloud Events Integration**: Capture and display OCI events related to resources
