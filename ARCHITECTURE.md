@@ -68,6 +68,113 @@ The OCI Projects Extension is a Chrome browser extension built using the Chrome 
    - User double-clicks on a resource in the project tree
    - Side panel opens the resource in the OCI Console
 
+## Key Code Implementations
+
+### 1. Context Menu Creation (background.js)
+```javascript
+chrome.runtime.onInstalled.addListener(() => {  
+  chrome.contextMenus.create({
+    id: "ociInfoForNetwork",
+    title: "Add OCI Details to OCI Projects extension",
+    contexts: ["page"],
+    documentUrlPatterns: ["*://cloud.oracle.com/*"]
+  });
+});
+```
+
+### 2. Context Menu Click Handling (background.js)
+```javascript
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === "ociInfoForNetwork") {
+    await handleOCIInfo(info, tab);
+  }
+});
+
+async function handleOCIInfo(info, tab) {
+  (async () => {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const response = await chrome.tabs.sendMessage(tab.id, { type: 'ociInfoRequest' });
+    chrome.runtime.sendMessage({
+      type: 'ociProfile',
+      profile: response.data,
+      ociUrl: response.ociUrl
+    });
+  })()
+}
+```
+
+### 3. Content Script Resource Extraction (oci-content.js)
+```javascript
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'ociInfoRequest') {
+    let profile = getProfile()
+    profile.type = 'ociResource'
+    sendResponse({ status: 'success', data: profile, ociUrl: window.location.href });
+  }
+});
+
+const getProfile = () => {
+  const profile = {}
+  getResourceType(profile)
+  return profile
+}
+```
+
+### 4. Side Panel Message Handling (side_panel.js)
+```javascript
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'ociProfile') {
+    let parentNode = selectedNode
+    if (!parentNode) {
+      alert('Please select the target node in the OCI Project Tree Navigator and try again')
+      return;
+    }
+    const ociNode = processOciProfile(message);
+    if (!parentNode.children) parentNode.children = [];
+    parentNode.children.push(ociNode)
+    changed = true
+    expandedNodes.add(parentNode.id);
+    refreshTree();
+  }
+});
+```
+
+### 5. Periodic Storage of Changes (side_panel.js)
+```javascript
+let changed = false;
+
+setInterval(() => {
+  if (changed) {
+    changed = false
+    saveProjects(data);
+  }
+}, 5000); // check every 5 seconds for a change
+```
+
+### 6. Local Storage Management (utils.js)
+```javascript
+const STORAGE_KEY = 'oci-projects';   // LocalStorage key for the projects data
+
+// Get all saved graphs from local storage
+export function getSavedProjects() {
+    const projects = localStorage.getItem(STORAGE_KEY);
+    return projects ? JSON.parse(projects) : [];
+}
+
+// Save projects to local storage
+export function saveProjects(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+export function generateGUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+```
+
 ## Data Structure
 
 ```javascript
