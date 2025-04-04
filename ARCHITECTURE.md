@@ -111,6 +111,48 @@ The extension uses Chrome's `localStorage` API to persist the project tree data 
 - No data is sent to external servers; all data is stored locally in the browser
 - The extension requires minimal permissions: contextMenus, activeTab, scripting, and sidePanel
 
+## Handling iframes in the OCI Console
+
+The Oracle Cloud Infrastructure (OCI) Console uses iframes extensively in its architecture to load and display resource details. This presents a unique challenge for the extension when extracting resource information.
+
+### Why iframes are important
+
+1. **OCI Console Structure**: The OCI Console loads resource details pages within iframes, separating the navigation framework from the actual resource content.
+
+2. **Content Isolation**: Critical resource information such as OCIDs, resource names, compartment details, and references to other resources are contained within these iframes rather than in the main document.
+
+3. **Dynamic Content Loading**: The iframes allow OCI to dynamically load different resource views without reloading the entire page.
+
+### How the extension handles iframes
+
+1. **iframe Detection**: When the content script (`oci-content.js`) is triggered by a context menu click, it searches for all iframes in the current document:
+   ```javascript
+   let iframes = document.querySelectorAll("iframe");
+   ```
+
+2. **Content Access**: For each iframe, the extension attempts to access its document content:
+   ```javascript
+   let iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+   ```
+
+3. **Element Extraction**: The extension then searches within each iframe for specific elements that contain resource information:
+   - Breadcrumb navigation to determine resource type and service
+   - Copy actions that contain OCIDs
+   - Resource names from heading elements
+   - Compartment information
+   - References to other OCI resources
+
+4. **Cross-Origin Handling**: The extension includes error handling for cases where iframes might be cross-origin and cannot be accessed due to browser security restrictions:
+   ```javascript
+   try {
+     // iframe content access and processing
+   } catch (error) {
+     // Handle security errors for cross-origin frames
+   }
+   ```
+
+This approach allows the extension to extract comprehensive resource information regardless of how the OCI Console structures its pages, ensuring reliable data capture across different resource types and console views.
+
 ## Component Interaction Diagram
 
 ```
